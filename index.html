@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Identify the Distribution</title>
+<style>
+  :root {
+    --page-bg-1: #f8fbff;
+    --page-bg-2: #eef4ff;
+    --ink: #1f2937;
+    --muted: #667085;
+
+    --panel: rgba(255, 255, 255, 0.78);
+    --panel-border: rgba(148, 163, 184, 0.35);
+
+    --blue: #2563eb;
+    --blue-soft: #dbeafe;
+
+    --green-bg: #dcfce7;
+    --green-border: #22c55e;
+    --green-ink: #166534;
+
+    --red-bg: #fee2e2;
+    --red-border: #ef4444;
+    --red-ink: #991b1b;
+
+    --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.10);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    text-align: center;
+    color: var(--ink);
+    margin: 0;
+    padding: 28px 16px 48px;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 34rem),
+      radial-gradient(circle at top right, rgba(14, 165, 233, 0.13), transparent 30rem),
+      linear-gradient(135deg, var(--page-bg-1), var(--page-bg-2));
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: linear-gradient(to bottom, black, transparent 85%);
+  }
+
+  h1 {
+    position: relative;
+    z-index: 1;
+    margin: 0 auto 14px;
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    line-height: 1;
+    letter-spacing: -0.055em;
+    font-weight: 900;
+    color: #111827;
+  }
+
+  .toolbar {
+    position: relative;
+    z-index: 1;
+    margin: 0 auto 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: .95rem;
+  }
+  select {
+    font: inherit;
+    font-weight: 800;
+    color: var(--ink);
+    padding: 7px 12px;
+    border-radius: 12px;
+    border: 2px solid rgba(100, 116, 139, 0.5);
+    background: #fff;
+  }
+
+  .context {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto 14px;
+    padding: 16px 24px;
+    font-size: clamp(1.05rem, 2.2vw, 1.3rem);
+    line-height: 1.45;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(148, 163, 184, 0.26);
+    border-radius: 24px;
+    box-shadow: 0 4px 14px rgba(15,23,42,.06);
+  }
+
+  .question {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto 8px;
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    line-height: 1.2;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #111827;
+  }
+
+  .instruction {
+    position: relative;
+    z-index: 1;
+    margin: 4px auto 18px;
+    max-width: 720px;
+    min-height: 34px;
+    font-size: clamp(1.05rem, 2.2vw, 1.4rem);
+    line-height: 1.25;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--blue);
+  }
+
+  .stage {
+    position: relative;
+    z-index: 1;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 20px 22px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 24px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(18px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .step .name {
+    width: 100%;
+    font-size: .9rem;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .step .expr {
+    font-size: clamp(1.15rem, 2.6vw, 1.6rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .step .unit { font-size: 1.5rem; font-weight: 800; }
+  .step + .step { padding-top: 14px; border-top: 1px solid rgba(148, 163, 184, 0.3); }
+  .frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; line-height: 1.15; margin: 0 4px; }
+  .frac > span:first-child { border-bottom: 3px solid var(--ink); padding: 0 6px 2px; }
+  .frac > span:last-child { padding: 2px 6px 0; }
+  .frac .frac { font-size: .78em; }
+  .frac .frac > span:first-child { border-bottom-width: 2px; }
+  .frac > span:first-child { border-bottom-width: 3px; }
+
+  input.answer-input {
+    width: 130px;
+    height: 60px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--ink);
+    border: 3px solid rgba(100, 116, 139, 0.62);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.10);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+  input.answer-input:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18), 0 0 0 5px rgba(37, 99, 235, 0.16);
+  }
+  input.incorrect {
+    color: var(--red-ink);
+    background: linear-gradient(180deg, #fff7f7, var(--red-bg));
+    border-color: var(--red-border);
+    animation: shake 160ms ease-in-out;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    33% { transform: translateX(-3px); }
+    66% { transform: translateX(3px); }
+  }
+
+  .fixed-number {
+    min-width: 130px;
+    height: 60px;
+    padding: 0 14px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--green-ink);
+    background: linear-gradient(180deg, #f0fdf4, var(--green-bg));
+    border: 3px solid var(--green-border);
+    border-radius: 16px;
+  }
+  .fixed-number.shown {
+    color: var(--blue);
+    background: linear-gradient(180deg, #f5f9ff, var(--blue-soft));
+    border-color: var(--blue);
+  }
+
+  .status {
+    position: relative;
+    z-index: 1;
+    width: fit-content;
+    max-width: 92%;
+    margin: 16px auto 0;
+    padding: 8px 18px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    min-height: 40px;
+  }
+  .status:empty { visibility: hidden; }
+  .status.no { background: var(--red-bg); border-color: var(--red-border); color: var(--red-ink); }
+  .status.yes { background: var(--green-bg); border-color: var(--green-border); color: var(--green-ink); border-radius: 20px; }
+
+  .buttons {
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button.action {
+    font: inherit;
+    font-size: 1.05rem;
+    font-weight: 800;
+    padding: 12px 26px;
+    border-radius: 14px;
+    border: 2px solid var(--blue);
+    background: var(--blue);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+  }
+  button.action.secondary { background: #fff; color: var(--blue); box-shadow: none; }
+
+  .ztable-wrap { position: relative; z-index: 1; margin: 22px auto 0; max-width: 100%; }
+  .ztable-wrap[hidden] { display: none; }
+  .ztable-scroll {
+    max-height: 340px;
+    overflow: auto;
+    display: inline-block;
+    max-width: 100%;
+    background: #fff;
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
+  }
+  table.ztable { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  table.ztable th, table.ztable td { padding: 4px 9px; border: 1px solid #e5e7eb; }
+  table.ztable thead th { position: sticky; top: 0; background: var(--blue-soft); color: var(--blue); z-index: 1; }
+  table.ztable tbody th { background: #f8fafc; font-weight: 800; position: sticky; left: 0; }
+  .ztable-note { margin: 0 0 8px; font-size: .9rem; color: var(--muted); font-weight: 700; }
+
+  @media (max-width: 560px) {
+    .step .expr { white-space: normal; text-align: center; }
+    input.answer-input, .fixed-number { width: 100px; min-width: 100px; font-size: 1.25rem; }
+  }
+
+  .choices { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .choices button {
+    font: inherit; font-size: 1rem; font-weight: 800; padding: 12px 18px; border-radius: 14px;
+    border: 2px solid rgba(100, 116, 139, 0.62); background: #fff; color: var(--ink); cursor: pointer;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+  }
+  .choices button:hover { border-color: var(--blue); color: var(--blue); }
+  .choices button.incorrect { color: var(--red-ink); background: var(--red-bg); border-color: var(--red-border); animation: shake 160ms ease-in-out; }
+
+  .options { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  button.option {
+    font: inherit; text-align: center; cursor: pointer; color: var(--ink);
+    padding: 14px 14px 12px; border-radius: 18px; background: var(--panel);
+    border: 3px solid rgba(100, 116, 139, 0.45); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: space-between;
+  }
+  button.option:hover:not(:disabled) { border-color: var(--blue); }
+  button.option .oname { font-size: .95rem; font-weight: 800; line-height: 1.2; color: var(--muted); }
+  button.option .oformula { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+  button.option.wrong { color: var(--red-ink); background: var(--red-bg); border-color: var(--red-border); animation: shake 160ms ease-in-out; }
+  button.option.right { background: linear-gradient(180deg, #f0fdf4, var(--green-bg)); border-color: var(--green-border); color: var(--green-ink); }
+  button.option.shown { background: linear-gradient(180deg, #f5f9ff, var(--blue-soft)); border-color: var(--blue); color: var(--blue); }
+  button.option:disabled { cursor: default; }
+
+  .chartwrap { position: relative; z-index: 1; width: min(100%, 680px); box-sizing: border-box; margin: 0 auto 16px; padding: 14px 14px 8px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 24px; box-shadow: var(--shadow-soft); }
+  .chartwrap svg { display: block; width: 100%; height: auto; }
+  .bar { fill: #93b4f5; stroke: #2563eb; stroke-width: 1.5; }
+  .axis { stroke: #1f2937; stroke-width: 2; }
+  .tick { stroke: #1f2937; stroke-width: 1.5; }
+  .tlabel { font-size: 13px; font-weight: 700; fill: #475467; text-anchor: middle; }
+  .ylabel { font-size: 13px; font-weight: 700; fill: #475467; text-anchor: end; }
+  .axtitle { font-size: 14px; font-weight: 800; fill: #475467; text-anchor: middle; }
+  .note { font-size: 15px; font-weight: 800; fill: #b45309; text-anchor: middle; }
+  .noteline { stroke: #d97706; stroke-width: 3; stroke-dasharray: 7 5; fill: none; }
+  .notedot { fill: #d97706; }
+  .arrow { stroke: #d97706; stroke-width: 4; fill: none; }
+  .shapes { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  button.shape {
+    font: inherit; font-size: 1.15rem; font-weight: 800; cursor: pointer; color: var(--ink);
+    padding: 16px 12px; border-radius: 18px; background: var(--panel);
+    border: 3px solid rgba(100, 116, 139, 0.45); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  }
+  button.shape:hover:not(:disabled) { border-color: var(--blue); }
+  button.shape.wrong { color: var(--red-ink); background: var(--red-bg); border-color: var(--red-border); animation: shake 160ms ease-in-out; }
+  button.shape.right { background: linear-gradient(180deg, #f0fdf4, var(--green-bg)); border-color: var(--green-border); color: var(--green-ink); }
+  button.shape.shown { background: linear-gradient(180deg, #f5f9ff, var(--blue-soft)); border-color: var(--blue); color: var(--blue); }
+  button.shape:disabled { cursor: default; }
+</style>
+</head>
+<body>
+<h1>Identify the Distribution</h1>
+
+<div class="instruction" id="instruction">What is the shape of this distribution?</div>
+
+<div class="chartwrap"><svg id="chart" viewBox="0 0 640 300" role="img" aria-label="Histogram of a distribution"></svg></div>
+
+<div class="shapes" id="shapes"></div>
+<div class="status" id="status"></div>
+
+<div class="buttons">
+  <button class="action" id="mainButton">Show Me</button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pick = xs => xs[Math.floor(Math.random() * xs.length)];
+const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+
+// ---------- the four shapes ----------
+const SHAPES = [
+  { id: "normal", label: "Normal",
+    why: "It is symmetric and bell-shaped, with a single peak in the middle and tails that taper off evenly on both sides." },
+  { id: "left", label: "Skewed left",
+    why: "The peak is on the right and the long tail stretches out to the left. A skew is named for the side the tail is on." },
+  { id: "right", label: "Skewed right",
+    why: "The peak is on the left and the long tail stretches out to the right. A skew is named for the side the tail is on." },
+  { id: "bimodal", label: "Bimodal",
+    why: "There are two distinct peaks with a dip between them." }
+];
+
+// ---------- sampling ----------
+function gauss() { let u = 0, v = 0; while (u === 0) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+function sampleRaw(id, n) {
+  const xs = [];
+  if (id === "normal") { for (let i = 0; i < n; i++) xs.push(gauss()); }
+  else if (id === "right" || id === "left") {
+    const s = rand(0.55, 0.85), sign = id === "right" ? 1 : -1;
+    for (let i = 0; i < n; i++) xs.push(sign * Math.exp(s * gauss()));
+  } else {
+    const w = rand(0.4, 0.6), d = rand(3.4, 4.6);
+    for (let i = 0; i < n; i++) xs.push(Math.random() < w ? gauss() : d + gauss());
+  }
+  return xs;
+}
+
+// Rescale to a random, friendly axis so the numbers differ between rounds.
+function rescale(xs) {
+  const lo = Math.min(...xs), hi = Math.max(...xs);
+  const span = pick([20, 40, 50, 60, 100]), start = pick([0, 10, 20, 50]);
+  return xs.map(x => start + (x - lo) / (hi - lo) * span);
+}
+
+// ---------- histogram + independent shape check ----------
+function histogram(xs, bins) {
+  const lo = Math.min(...xs), hi = Math.max(...xs), w = (hi - lo) / bins;
+  const counts = new Array(bins).fill(0);
+  xs.forEach(x => { counts[Math.min(bins - 1, Math.floor((x - lo) / w))]++; });
+  return { lo, hi, w, counts };
+}
+function skewness(xs) {
+  const n = xs.length, m = xs.reduce((a, b) => a + b, 0) / n;
+  const m2 = xs.reduce((a, b) => a + (b - m) ** 2, 0) / n, m3 = xs.reduce((a, b) => a + (b - m) ** 3, 0) / n;
+  return m3 / Math.pow(m2, 1.5);
+}
+// Distinct peaks of the smoothed histogram: local maxima that stand well above
+// the valley separating them from a taller neighbour.
+function peaksOf(counts) {
+  const sm = counts.map((c, i) => (counts[i - 1] ?? c) * 0.25 + c * 0.5 + (counts[i + 1] ?? c) * 0.25);
+  const max = Math.max(...sm);
+  let cand = [];
+  for (let i = 0; i < sm.length; i++) {
+    const l = sm[i - 1] ?? -1, r = sm[i + 1] ?? -1;
+    if (sm[i] >= l && sm[i] >= r && sm[i] >= 0.3 * max) cand.push(i);
+  }
+  const merged = [];
+  for (const i of cand) {
+    const last = merged[merged.length - 1];
+    if (last === undefined) { merged.push(i); continue; }
+    const valley = Math.min(...sm.slice(last, i + 1));
+    if (valley <= 0.7 * Math.min(sm[last], sm[i])) merged.push(i);       // a real dip between them
+    else if (sm[i] > sm[last]) merged[merged.length - 1] = i;
+  }
+  return merged;
+}
+// Does this sample actually look like the shape it is labelled?
+function looksLike(id, xs, h) {
+  const peaks = peaksOf(h.counts), sk = skewness(xs), k = peaks[0] / (h.counts.length - 1);
+  if (id === "bimodal") return peaks.length === 2 && peaks.every(p => h.counts[p] >= 0.45 * Math.max(...h.counts));
+  if (peaks.length !== 1) return false;
+  if (id === "normal") return Math.abs(sk) <= 0.2 && k > 0.38 && k < 0.62;
+  if (id === "right") return sk >= 0.85 && k < 0.42;
+  return sk <= -0.85 && k > 0.58;
+}
+
+const N = 300, BINS = 16;
+function makeProblem(prevId) {
+  for (let tries = 0; tries < 400; tries++) {
+    const shape = pick(SHAPES);
+    if (shape.id === prevId && Math.random() < 0.7) continue;
+    const xs = rescale(sampleRaw(shape.id, N)), h = histogram(xs, BINS);
+    if (looksLike(shape.id, xs, h)) return { shape, xs, h };
+  }
+}
+
+// ---------- drawing ----------
+const W = 640, H = 300, L = 54, R = 20, T = 28, B = 56;
+let P = null, solved = false;
+
+function niceTicks(lo, hi) {
+  const step = [1, 2, 5, 10, 20, 25, 50].find(s => (hi - lo) / s <= 8) ?? 100;
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(v);
+  return out;
+}
+function draw(annotate) {
+  const { h } = P, max = Math.max(...h.counts), yMax = Math.ceil(max / 10) * 10;
+  const xOf = v => L + (v - h.lo) / (h.hi - h.lo) * (W - L - R);
+  const yOf = c => T + (1 - c / yMax) * (H - T - B);
+  let s = "";
+  // y axis
+  for (let c = 0; c <= yMax; c += yMax <= 40 ? 10 : 20) {
+    s += `<line class="tick" x1="${L - 5}" y1="${yOf(c)}" x2="${L}" y2="${yOf(c)}"/><text class="ylabel" x="${L - 9}" y="${yOf(c) + 4}">${c}</text>`;
+  }
+  // bars
+  h.counts.forEach((c, i) => {
+    const x0 = xOf(h.lo + i * h.w), x1 = xOf(h.lo + (i + 1) * h.w);
+    s += `<rect class="bar" x="${x0}" y="${yOf(c)}" width="${x1 - x0}" height="${H - B - yOf(c)}"/>`;
+  });
+  s += `<line class="axis" x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}"/><line class="axis" x1="${L}" y1="${T}" x2="${L}" y2="${H - B}"/>`;
+  niceTicks(h.lo, h.hi).forEach(v => {
+    s += `<line class="tick" x1="${xOf(v)}" y1="${H - B}" x2="${xOf(v)}" y2="${H - B + 5}"/><text class="tlabel" x="${xOf(v)}" y="${H - B + 20}">${v}</text>`;
+  });
+  s += `<text class="axtitle" x="${(L + W - R) / 2}" y="${H - 8}">Value</text>`;
+  s += `<text class="axtitle" transform="translate(14 ${(T + H - B) / 2}) rotate(-90)">Frequency</text>`;
+  if (annotate) s += annotation(xOf, yOf);
+  $("chart").innerHTML = s;
+}
+// Show Me / Correct: mark the thing that decides the shape.
+function annotation(xOf, yOf) {
+  const { shape, h } = P, mid = i => xOf(h.lo + (i + 0.5) * h.w), peaks = peaksOf(h.counts);
+  let s = "";
+  if (shape.id === "normal") {
+    const x = mid(peaks[0]);
+    s += `<line class="noteline" x1="${x}" y1="${T - 4}" x2="${x}" y2="${H - B}"/><text class="note" x="${x}" y="${T - 10}">one peak, symmetric</text>`;
+  } else if (shape.id === "bimodal") {
+    peaks.forEach(p => { s += `<circle class="notedot" cx="${mid(p)}" cy="${yOf(h.counts[p]) - 12}" r="6"/>`; });
+    s += `<text class="note" x="${(mid(peaks[0]) + mid(peaks[1])) / 2}" y="${T - 10}">two peaks</text>`;
+  } else {
+    const dir = shape.id === "right" ? 1 : -1, y = yOf(Math.max(...h.counts)) - 4 + 0 * dir, x0 = mid(peaks[0]);
+    const y2 = H - B - 34, xa = dir === 1 ? x0 + 40 : x0 - 40, xb = dir === 1 ? W - R - 30 : L + 30;
+    s += `<path class="arrow" d="M ${xa} ${y2} L ${xb} ${y2} M ${xb} ${y2} l ${-dir * 12} -9 M ${xb} ${y2} l ${-dir * 12} 9"/>`;
+    s += `<text class="note" x="${(xa + xb) / 2}" y="${y2 - 12}">long tail</text>`;
+  }
+  return s;
+}
+
+// ---------- interaction ----------
+function say(text, cls) { $("status").textContent = text || ""; $("status").className = "status" + (cls ? " " + cls : ""); }
+
+function drawShapes() {
+  const box = $("shapes"); box.innerHTML = "";
+  SHAPES.forEach(sh => {
+    const b = document.createElement("button");
+    b.className = "shape"; b.dataset.id = sh.id; b.textContent = sh.label;
+    b.addEventListener("click", () => choose(sh, b));
+    box.appendChild(b);
+  });
+}
+// A wrong pick names what to look at, not the answer.
+function nudge(chosen) {
+  const right = P.shape.id;
+  const skew = id => id === "left" || id === "right";
+  if (skew(chosen.id) && skew(right)) return "Not quite. A skew is named for the side the long tail is on, not the side the peak is on.";
+  if (chosen.id === "bimodal" || right === "bimodal") return "Not quite. Count the peaks. How many distinct humps do you see?";
+  return "Not quite. Is it symmetric, or does one side stretch out longer than the other?";
+}
+function lockAll(rightId, cls) {
+  document.querySelectorAll("#shapes button").forEach(b => {
+    b.disabled = true; b.classList.remove("wrong");
+    if (b.dataset.id === rightId) b.classList.add(cls);
+  });
+}
+function choose(sh, btn) {
+  if (solved) return;
+  if (sh.id === P.shape.id) {
+    solved = true; lockAll(sh.id, "right"); draw(true);
+    $("instruction").textContent = "Correct!"; say(P.shape.why, "yes");
+    $("mainButton").textContent = "New Problem";
+  } else {
+    btn.classList.remove("wrong"); void btn.offsetWidth; btn.classList.add("wrong");
+    say(nudge(sh), "no");
+  }
+}
+function showMe() {
+  solved = true; lockAll(P.shape.id, "shown"); draw(true);
+  $("instruction").textContent = "Here is the shape."; say(P.shape.why, "yes");
+  $("mainButton").textContent = "New Problem";
+}
+function start() {
+  P = makeProblem(P && P.shape.id); solved = false;
+  draw(false); drawShapes(); say("");
+  $("instruction").textContent = "What is the shape of this distribution?";
+  $("mainButton").textContent = "Show Me";
+}
+$("mainButton").addEventListener("click", () => { if (solved) start(); else showMe(); });
+start();
+</script>
+</body>
+</html>
